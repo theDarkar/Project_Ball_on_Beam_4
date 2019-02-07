@@ -17,10 +17,10 @@ Tuesday 29th Jan. 2019 (?)
 - Pillar piece had its edges widened so the rail could fit. 
 - Attached the two pieces of rail to eachother
 
-February 1st Feb. 2019
+Friday February 1st Feb. 2019
 - Received servo and sensors from Anders Sætermoen
 - Cut out a small piece of wood for the servo to sit on, and made a 3D-printed frame for the servo to sit in
-- Started looking for ways to raise and lower the rail, found an rotateable(?) arm that we decided to use. 
+- Started looking for ways to raise and lower the rail, found a rotateable(?) arm that we decided to use. 
 - Started working on a way to attach the arm to the servo. Decided to use a circular plate as a base and then attach a steel/aluminum/whatever beam between it and the arm. 
 - Created a mount for the sensors to attach to the end of the rail, and a small barrier at the other end of the rail to prevent the ball from falling off the backside
 
