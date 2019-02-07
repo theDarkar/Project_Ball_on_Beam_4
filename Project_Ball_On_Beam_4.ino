@@ -20,6 +20,7 @@ const int RED_BUTTON_PIN = 8;         // Pin connected to red buttton
 const int POT_PIN = A0;               // Pin connected to potmeter
 const int SERVO_PIN = 9;              // Pin connected to servo
 const int MAX_VOLTAGE = 5;            // Maximum voltage the analog pin can read
+const int INITIAL_SERVO_POS = 90;     // Initial servo position
 
 int servoAngle = 0;            // Angle of the servo
 float beamAngle = 0;           // Angle of the beam
@@ -30,13 +31,14 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   pinMode(RED_BUTTON_PIN, INPUT);
   mainServo.attach(SERVO_PIN);  // attaches the servo on pin 9 to the servo object
+  setServoPos(INITIAL_SERVO_POS);
   Serial.begin(9600);
 }
 
 void loop() {
   servoAngle = getDesiredServoPos(SERVO_PIN); 
   beamAngle = getBeamAngle(servoAngle);
-  ballDistance = getBallPos();
+  ballDistance = getBallPos(true);
   setLedPins(currentMode, LED_PIN);
   switch (currentMode) {
     case MANUAL_MODE:
@@ -65,7 +67,7 @@ void loop() {
 */
 void manualMode(int potPin) {
   float newBeamAngle = map(getPotmeterReading(potPin), 0, 1023, MIN_BEAM_ANGLE , MAX_BEAM_ANGLE);
-  setBeamAngle(newBeamAngle);
+  //setBeamAngle(newBeamAngle);
 }
 
 /**
