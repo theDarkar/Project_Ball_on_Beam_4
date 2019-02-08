@@ -2,14 +2,13 @@
 
 Servo mainServo;                        // Create servo object to control a servo
 
-const boolean LOGGING = true;
 const double BALL_WEIGHT = 10;        // Weight of ball
 const double ARM_RADIUS = 10;         // Radius of the arm on the wheel
 const double ARM_LENGTH = 10;         // Length of the arm between the beam and the wheel
-const double MIN_SERVO_ANGLE = 82;    // The minimum angle the servo can reach
-const double MAX_SERVO_ANGLE = 148;   // The maximum angle the servo can reach
-const double MIN_BEAM_ANGLE = 0;    // The minimum angle the beam is allowed to travel
-const double MAX_BEAM_ANGLE = 1023;     // The minimum angle the beam is allowed to travel
+const double MIN_SERVO_ANGLE = 10;    // The minimum angle the servo can reach
+const double MAX_SERVO_ANGLE = 180;   // The maximum angle the servo can reach
+const double MIN_BEAM_ANGLE = -10;    // The minimum angle the beam is allowed to travel
+const double MAX_BEAM_ANGLE = 10;     // The minimum angle the beam is allowed to travel
 const double BALL_MIN_DISTANCE = 100; // The minimum distance the ball is allowed to travel
 const double BALL_MAX_DISTANCE = 500; // The maximum distance the ball is allowed to travel
 const double K_P = 1;                 // The proportional gain
@@ -23,37 +22,36 @@ const int POT_PIN = A0;               // Pin connected to potmeter
 const int DIST_SENSOR_PIN = A1;       // Pin connected to distance sensor
 const int SERVO_PIN = 9;              // Pin connected to servo
 const int MAX_VOLTAGE = 5;            // Maximum voltage the analog pin can read
-const int INITIAL_SERVO_POS = 115;    // Initial servo position
-const int NUM_READINGS = 100;         //
+const int INITIAL_SERVO_POS = 90;     // Initial servo position
+const int NUM_READINGS = 10;          //
 
-int INPUT_TABLE[] = {620,569,529,482,447,411,384,362,341,322,306,293,277,270,257,246,238,228,219,216,210,204,202,197,190,186,181,180,177,172,169,166,162};
-int INPUT_INDEX[] = {7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39};
+int INPUT_TABLE[10];
+int INPUT_INDEX[10];
 
 float beamAngle = 0;            // Angle of the beam
 double ballDistance = 0;        // Distance of ball
 int currentMode = MANUAL_MODE;  // Sets the current operational state
-int servoAngle = 0;             // Angle of the servoinput
+int servoAngle = 0;             // Angle of the servo
+int distReadings[NUM_READINGS]; // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
 int totalDist = 0;              // the running total
 int averageDist = 0;            //
-int angle1 = 0;
-int angle2 = 0;
-boolean a = true;
 
 void setup() {
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
   mainServo.attach(SERVO_PIN);  // attaches the servo on pin 9 to the servo object
   setServoPos(INITIAL_SERVO_POS);
+  for (int i = 0; i < NUM_READINGS; i++) {
+    distReadings[i] = 0;
+  }
   Serial.begin(9600);
-  delay(1000);
 }
 
 void loop() {
   beamAngle = getBeamAngle(servoAngle);
-  ballDistance = getBallPos(NUM_READINGS,INPUT_TABLE,INPUT_INDEX,DIST_SENSOR_PIN);
+  ballDistance = getBallPos(NUM_READINGS,distReadings,INPUT_TABLE,INPUT_INDEX,DIST_SENSOR_PIN);
   setLedPins(currentMode, LED_PIN);
-  
   switch (currentMode) {
     case MANUAL_MODE:
       manualMode(POT_PIN);
@@ -80,8 +78,8 @@ void loop() {
    @param potPin The pin the potmeter is connected to
 */
 void manualMode(int potPin) {
-  //int newBeamAngle = map(, 0, 1023, MIN_BEAM_ANGLE , MAX_BEAM_ANGLE);
-  setBeamAngle(potPin);
+  float newBeamAngle = map(getPotmeterReading(potPin), 0, 1023, MIN_BEAM_ANGLE , MAX_BEAM_ANGLE);
+  setBeamAngle(newBeamAngle);
 }
 
 /**
@@ -136,7 +134,7 @@ float integralValue(double Ki, double setpoint, double currentValue) {
    @return The D value
 */
 float derivativeValue(double Kd, double setpoint, double currentValue) {
-  float D = 0;// err - old_err
+  float D = 0;
   return 0;
 }
 
@@ -159,16 +157,16 @@ float getBeamAngle(int servoAng) {
                          when set to false the readings will come only after 20 ms
    @return Returns the current ball position in mm
 */
-float getBallPos(int numReading, int inputTable[], int inputIndex[],int pin) {
-  int distReadings[numReading];
+float getBallPos(int numReading, int readings[], int inputTable[], int inputIndex[],int pin) {
   for (int i = 0; i < numReading - 1; i++) {
-    distReadings[i] = analogRead(pin);
+    distReadings[i] = readings[i + 1];
   }
+  distReadings[numReading] = analogRead(pin);
   int sumReadings = 0;
-  for(int i = 0; i < numReading -1; i++){
+  for(int i = 0; i < numReading; i++){
     sumReadings = sumReadings + distReadings[i];
   }
-  int averageReading = sumReadings / numReading;
+  int averageReading = sumReadings / 10;
   //float ballDist = dist;
   return averageReading;//ballDist;
 }
@@ -198,9 +196,9 @@ void setLedPins(int mode, int pin) {
    @param The pin the potmeter is connected to
    @return The potmeter positon from 0 to 1023
 */
-int getPotmeterReading(int pin) {
+float getPotmeterReading(int pin) {
   // float potPos = map(getVoltage(pin), 0, MAX_VOLTAGE, 0, 1023);
-  int potPos = analogRead(pin);
+  float potPos = analogRead(pin);
   return potPos;
 }
 
@@ -219,9 +217,10 @@ float getVoltage(int pin) {
 
    @param angle The desired angle of the beam
 */
-void setBeamAngle(int pin) {
-  int pos = getDesiredServoPos(pin);
-  pos = constrain(pos,MIN_SERVO_ANGLE,MAX_SERVO_ANGLE);
+void setBeamAngle(float angle) {
+  int pos = ))*angle + 
+  
+  //map(angle, MIN_BEAM_ANGLE, MAX_BEAM_ANGLE, MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);
   setServoPos(pos);
 }
 
@@ -300,9 +299,10 @@ void turnLedOff(int ledPin) {
    @param potPin The pin the potmeter is connected to
 */
 void printToSerial(int mode, float ballDist, float beamAng, float servoAng, int potPin) {
- if(!LOGGING){
   Serial.print("Ball distance: ");
   Serial.print(ballDist);
+  Serial.print("  ");
+  Serial.print(analogRead(A1));
   Serial.print("  ");
   Serial.print(ballDistance);
   Serial.print("cm  Beam angle: ");
@@ -324,30 +324,6 @@ void printToSerial(int mode, float ballDist, float beamAng, float servoAng, int 
     default:
       Serial.print("!!!ERROR!!!");
       break;
-  }}else{
-  Serial.print("Ball distance: ");
-  Serial.print(analogRead(A1));
-  Serial.print("  Servo angle: ");
-  Serial.print(servoAng);
-  Serial.print("   ");
-  Serial.print(angle1);
-  Serial.print("   ");
-  Serial.print("  Mode: ");
-  switch (mode) {
-    case MANUAL_MODE:
-      Serial.print("MANUAL");
-      Serial.print("  Potmeter: ");
-      Serial.print(getPotmeterReading(potPin));
-      break;
-    case REG_MODE:
-      Serial.print("REGULATOR");
-      Serial.print("  Setpoint: ");
-      Serial.print(getPotmeterReading(potPin));
-      break;
-    default:
-      Serial.print("!!!ERROR!!!");
-      break;
-    }
-}
+  }
   Serial.println("");
 }
