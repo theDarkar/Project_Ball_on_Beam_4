@@ -7,14 +7,14 @@ Hans-Christian Ringstad
 Fredrik Siem Taklo
 
 ---------------------------
-Construction
+Construction (outline)
 
 Tuesday 29th Jan. 2019 (?)
 - Bought the rail that ball is going to roll down at Biltema, and brought a plank to build the project on. Servo and sensor ordered by Anders Sætermoen
 - Cut off a part of the rail to use as the pillar that the rail pivots on
-- Cut off pieces of the plank so the pillar and servo could have something to stand on to keep the rail higher above the ground, allowing for more freedom of movement
+- Cut off pieces of the plank so the pillar and servo could have something to be placed on to keep the rail higher above the ground, allowing for more freedom of movement
 - Drilled a hole in the end of the two pieces of rail so they could be attached by a screw and rotate
-- Pillar piece had its edges widened so the rail could fit. 
+- Pillar piece had its edges widened so the rail could fit between the edges. 
 - Attached the two pieces of rail to eachother
 
 Friday February 1st Feb. 2019
@@ -36,3 +36,22 @@ Tuesday 5th Feb. 2019
 - Attached pillars to plank, and removed the small barrier from earlier due to being unnecessary
 - Pillars were leaning away from eachother, causing the rail to wobble when high up. Pushed them closer together by connecting the top of the pillars with a piece of metal. 
 - Finished attaching arduino components to plank
+
+Thursday 7th Feb. 2019
+- Started connecting and adding components to the breadboard and plank.
+- Started coding the control system program. 
+- Målte opp måleverdier for å gjøre klar til linearisering
+
+Friday 8th Feb. 2019
+- Swapped the sensor with another, more accurate sensor due to the readings from the previous one being unreliable
+- Added measurement marks to the side of the rail for convenience. 
+- Made new readings with the new sensors
+- Attached counterweights to the back-end of the rail so the motor didn't have to struggle as much when turning
+- Adjusted the position of the arm to help with stability
+- Fixed some bugs in the code. Among others, the servo isn't as jumpy anymore and follows the potentiometer more accurately. 
+
+------------
+
+Construction (report)
+
+__ started ___. ___ need a rail to roll the ball on, and ___ 
