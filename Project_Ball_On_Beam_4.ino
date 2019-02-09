@@ -80,8 +80,8 @@ void loop() {
    @param potPin The pin the potmeter is connected to
 */
 void manualMode(int potPin) {
-  //int newBeamAngle = map(, 0, 1023, MIN_BEAM_ANGLE , MAX_BEAM_ANGLE);
-  setBeamAngle(potPin);
+  int pos = getDesiredServoPos(potPin);
+  setBeamAngle(pos);
 }
 
 /**
@@ -93,11 +93,11 @@ void manualMode(int potPin) {
    @param beamAngle The current beam angle
 */
 void regMode(int potPin, float ballDist, float beamAng) {
-  float setpoint = map(getPotmeterReading(potPin), 0, 1023, BALL_MIN_DISTANCE, BALL_MAX_DISTANCE);
-  float P = proportionalValue(K_P, setpoint, ballDist);
-  float I = integralValue(K_I, setpoint, ballDist);
-  float D = derivativeValue(K_D, setpoint, ballDist);
-  float newBeamAngle = P + I + D;
+  int setpoint = map(getPotmeterReading(potPin), 0, 1023, BALL_MIN_DISTANCE, BALL_MAX_DISTANCE);
+  int P = proportionalValue(K_P, setpoint, ballDist);
+  int I = integralValue(K_I, setpoint, ballDist);
+  int D = derivativeValue(K_D, setpoint, ballDist);
+  int newBeamAngle = getDesiredServoPos(P + I + D);
   setBeamAngle(newBeamAngle);
 }
 
@@ -215,12 +215,12 @@ float getVoltage(int pin) {
 }
 
 /**
-   Sets the angle of the beam
+   Sets the angle of the beam by a sending the angle to the servo 
+   and constrain the angle from MIN_SERVO_ANGLE to MAX_SERVO_ANGLE.
 
-   @param angle The desired angle of the beam
+   @param pos The desired servo pos 0 to 180
 */
-void setBeamAngle(int pin) {
-  int pos = getDesiredServoPos(pin);
+void setBeamAngle(int pos) {
   pos = constrain(pos,MIN_SERVO_ANGLE,MAX_SERVO_ANGLE);
   setServoPos(pos);
 }
