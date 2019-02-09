@@ -94,6 +94,7 @@ void manualMode(int potPin) {
 */
 void regMode(int potPin, float ballDist, float beamAng) {
   int setpoint = map(getPotmeterReading(potPin), 0, 1023, BALL_MIN_DISTANCE, BALL_MAX_DISTANCE);
+  
   int P = proportionalValue(K_P, setpoint, ballDist);
   int I = integralValue(K_I, setpoint, ballDist);
   int D = derivativeValue(K_D, setpoint, ballDist);
