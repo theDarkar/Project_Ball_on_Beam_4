@@ -27,21 +27,28 @@ const int MAX_VOLTAGE = 5;            // Maximum voltage the analog pin can read
 const int INITIAL_SERVO_POS = 115;    // Initial servo position
 const int NUM_READINGS = 10;          // The amount of readings taken before given an average
 
-int INPUT_TABLE[] = {620, 594.5, 569, 549, 529, 505.5, 482, 464.5, 447, 429, 411, 397.5, 384, 373, 362, 351.5, 341, 331.5, 322, 314, 306, 299.5, 293, 285, 277, 273.5, 270, 263.5, 257, 251.5, 246, 242, 238, 233, 228, 223.5, 219, 217.5, 216, 213, 210, 207, 204, 203, 202, 199.5, 197, 193.5, 190, 188, 186, 183.5, 181, 180.5, 180, 178.5, 177, 174.5, 172, 170.5, 169, 167.5, 166, 164, 162};
-int INPUT_INDEX[] = {7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19, 19.5, 20, 20.5, 21, 21.5, 22, 22.5, 23, 23.5, 24, 24.5, 25, 25.5, 26, 26.5, 27, 27.5, 28, 28.5, 29, 29.5, 30, 30.5, 31, 31.5, 32, 32.5, 33, 33.5, 34, 34.5, 35, 35.5, 36, 36.5, 37, 37.5, 38, 38.5, 39};
+// Distance reading
+float INPUT_TABLE[] = {620, 594.5, 569, 549, 529, 505.5, 482, 464.5, 447, 429, 411, 397.5, 384, 373, 362, 351.5, 341, 331.5, 322, 314, 306, 299.5, 293, 285, 277, 273.5, 270, 263.5, 257, 251.5, 246, 242, 238, 233, 228, 223.5, 219, 217.5, 216, 213, 210, 207, 204, 203, 202, 199.5, 197, 193.5, 190, 188, 186, 183.5, 181, 180.5, 180, 178.5, 177, 174.5, 172, 170.5, 169, 167.5, 166, 164, 162};
+float INPUT_INDEX[] = {7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5, 18, 18.5, 19, 19.5, 20, 20.5, 21, 21.5, 22, 22.5, 23, 23.5, 24, 24.5, 25, 25.5, 26, 26.5, 27, 27.5, 28, 28.5, 29, 29.5, 30, 30.5, 31, 31.5, 32, 32.5, 33, 33.5, 34, 34.5, 35, 35.5, 36, 36.5, 37, 37.5, 38, 38.5, 39};
+float distReadings[NUM_READINGS] = {};  // The last 10 sensor readings
+int distReadIndex = 0;                  // Index of the array above
 
-float beamAngle = 0;            // Angle of the beam
-float ballDistance = 0;        // Distance of ball
-int currentMode = MANUAL_MODE;  // Sets the current operational state
-int servoAngle = 0;             // Angle of the servoinput
-int readIndex = 0;              // the index of the current reading
-int totalDist = 0;              // the running total
+float beamAngle = 0;                    // Angle of the beam
+float ballDistance = 0;                 // Distance of ball
+int currentMode = MANUAL_MODE;          // Sets the current operational state
+int servoAngle = 0;                     // Angle of the servoinput
+int readIndex = 0;                      // the index of the current reading
+int totalDist = 0;                      // the running total
 int lastError = 0;
 int integral = 0;
 int PID = 0;
 int val = 0;
 int set = 0;
 int ball = 0;
+
+// Timer
+unsigned long timerStart = 0; // the time the timer started
+bool timerRunning = false; // true if still waiting for timer to finish
 
 void setup() {
   pinMode(LED_PIN, OUTPUT);
@@ -169,18 +176,31 @@ float getBeamAngle(int servoAng) {
                          when set to false the readings will come only after 20 ms
    @return Returns the current ball position in mm
 */
-float getBallPos(int numReading, int inputTable[], int inputIndex[],int pin) {
-  int distReadings[numReading];
-  for (int i = 0; i < numReading - 1; i++) {
-    distReadings[i] = analogRead(pin);
-    delay(5);
+float getBallPos(int numReading, float inputTable[], float inputIndex[],int pin) {
+  float sumReadings;
+  float approxDistance;
+  // Add new reading to array
+  if (distReadIndex < numReading) {
+  distReadings[distReadIndex] = analogRead(pin);
+  distReadIndex++;
+  } else {
+    distReadIndex = 0;
   }
-  int sumReadings = 0;
+  // Take average of readings
   for(int i = 0; i < numReading -1; i++){
     sumReadings = sumReadings + distReadings[i];
   }
-  int averageReading = sumReadings / numReading;
-  return averageReading;
+  float averageReading = sumReadings / numReading;
+  // Approximate real distance (in cm)
+  for (int i = 0; i < sizeof(inputTable); i++) {
+    if (averageReading > inputTable[i] && averageReading < inputTable[i+1]) {
+      approxDistance = inputIndex[i];
+    }
+    else {
+      approxDistance = MAX_SERVO_ANGLE; // Assume that the ball is far away
+    }
+  }
+  return approxDistance;
 }
 
 /**
