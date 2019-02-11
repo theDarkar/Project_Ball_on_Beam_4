@@ -8,8 +8,8 @@ const double ARM_RADIUS = 10;         // Radius of the arm on the wheel
 const double ARM_LENGTH = 10;         // Length of the arm between the beam and the wheel
 const double MIN_SERVO_ANGLE = 82;    // The minimum angle the servo can reach
 const double MAX_SERVO_ANGLE = 148;   // The maximum angle the servo can reach
-const double MIN_BEAM_ANGLE = 0;    // The minimum angle the beam is allowed to travel
-const double MAX_BEAM_ANGLE = 1023;     // The minimum angle the beam is allowed to travel
+const double MIN_BEAM_ANGLE = 0;      // The minimum angle the beam is allowed to travel
+const double MAX_BEAM_ANGLE = 1023;   // The minimum angle the beam is allowed to travel
 const double BALL_MIN_DISTANCE = 100; // The minimum distance the ball is allowed to travel
 const double BALL_MAX_DISTANCE = 500; // The maximum distance the ball is allowed to travel
 const double K_P = 1;                 // The proportional gain
@@ -24,18 +24,19 @@ const int DIST_SENSOR_PIN = A1;       // Pin connected to distance sensor
 const int SERVO_PIN = 9;              // Pin connected to servo
 const int MAX_VOLTAGE = 5;            // Maximum voltage the analog pin can read
 const int INITIAL_SERVO_POS = 115;    // Initial servo position
-const int NUM_READINGS = 100;         //
+const int NUM_READINGS = 100;         // The amount of readings taken before given an average
 
 int INPUT_TABLE[] = {620,569,529,482,447,411,384,362,341,322,306,293,277,270,257,246,238,228,219,216,210,204,202,197,190,186,181,180,177,172,169,166,162};
 int INPUT_INDEX[] = {7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39};
 
 float beamAngle = 0;            // Angle of the beam
 double ballDistance = 0;        // Distance of ball
+double oldBallDistance = 0;     // Old distance of ball
 int currentMode = MANUAL_MODE;  // Sets the current operational state
 int servoAngle = 0;             // Angle of the servoinput
 int readIndex = 0;              // the index of the current reading
 int totalDist = 0;              // the running total
-int averageDist = 0;            //
+int averageDist = 0;            // 
 int angle1 = 0;
 int angle2 = 0;
 boolean a = true;
@@ -62,7 +63,7 @@ void loop() {
       }
       break;
     case REG_MODE:
-      //regMode(POT_PIN, ballDistance, beamAngle);
+      regMode(POT_PIN, ballDistance, oldBallDistance);
       if (!isButtonPressed(BUTTON_PIN)) {
         currentMode = MANUAL_MODE;
       }
@@ -71,6 +72,7 @@ void loop() {
       break;
   }
   printToSerial(currentMode, ballDistance, beamAngle, servoAngle, POT_PIN);
+  oldBallDistance = ballDistance;
 }
 
 /**
@@ -92,14 +94,15 @@ void manualMode(int potPin) {
    @param ballDist The current ball distance
    @param beamAngle The current beam angle
 */
-void regMode(int potPin, float ballDist, float beamAng) {
-  int setpoint = map(getPotmeterReading(potPin), 0, 1023, BALL_MIN_DISTANCE, BALL_MAX_DISTANCE);
-  
-  int P = proportionalValue(K_P, setpoint, ballDist);
-  int I = integralValue(K_I, setpoint, ballDist);
-  int D = derivativeValue(K_D, setpoint, ballDist);
+void regMode(int potPin, float ballDist, oldBallDist) {
+  int setpoint = getPotmeterReading(potPin);//= map(getPotmeterReading(potPin), 0, 1023, BALL_MIN_DISTANCE, BALL_MAX_DISTANCE);
+  int error = setpoint - currentValue;
+  int P = proportionalValue(K_P, error);
+  int I = integralValue(K_I, error, ballDist);
+  int D = derivativeValue(K_D, error, lastError);
   int newBeamAngle = getDesiredServoPos(P + I + D);
   setBeamAngle(newBeamAngle);
+  lastError = error;
 }
 
 /**
@@ -110,8 +113,8 @@ void regMode(int potPin, float ballDist, float beamAng) {
    @param Kp The proportional gain
    @return The P value
 */
-float proportionalValue(double Kp, double setpoint, double currentValue) {
-  float P = Kp * (setpoint - currentValue);
+int proportionalValue(double Kp, int err) {
+  int P = Kp * err;
   return P;
 }
 
@@ -123,21 +126,21 @@ float proportionalValue(double Kp, double setpoint, double currentValue) {
    @param Ki The integral gain
    @return The I value
 */
-float integralValue(double Ki, double setpoint, double currentValue) {
-  float I = 0;
+int integralValue(double Ki, double setpoint, double currentValue) {
+  int I = 0;
   return 0;
 }
 
 /**
    Calculates the D value in the PID-regulator
 
-   @param setpoint The desired value
-   @param currentValue The current value
    @param Kd The derivative gain
+   @param currentValue The current value
+   @param oldValue The old value
    @return The D value
 */
-float derivativeValue(double Kd, double setpoint, double currentValue) {
-  float D = 0;// err - old_err
+int derivativeValue(double Kd, int err, oldErr) {
+  int D = Kd*(err - oldErr);
   return 0;
 }
 
@@ -170,8 +173,7 @@ float getBallPos(int numReading, int inputTable[], int inputIndex[],int pin) {
     sumReadings = sumReadings + distReadings[i];
   }
   int averageReading = sumReadings / numReading;
-  //float ballDist = dist;
-  return averageReading;//ballDist;
+  return averageReading;
 }
 
 /**
@@ -249,7 +251,7 @@ void setServoPos(int pos) {
 */
 int getDesiredServoPos(int pin) {
   int cmdPos = analogRead(pin);
-  cmdPos = map(cmdPos, 0, 1023, 0, 180);  // Scale the input to a value between 0 and 180
+  cmdPos = map(cmdPos, 0, 1023, MIN_SERVO_ANGLE, MAX_SERVO_ANGLE);  // Scale the input to a value between 0 and 180
   return cmdPos;
 }
 
