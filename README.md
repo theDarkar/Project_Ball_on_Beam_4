@@ -50,6 +50,16 @@ Friday 8th Feb. 2019
 - Adjusted the position of the arm to help with stability
 - Fixed some bugs in the code. Among others, the servo isn't as jumpy anymore and follows the potentiometer more accurately. 
 
+Monday 11th Feb. 2019
+- Improved code, added PD controller code to program
+- Added minimum and maximum values to put the setpoint to at 10cm minimum and 35cm maximum
+- Extended table of sensor readings
+
+Tuesday 12th Feb. 2019
+Replaced capacitor with a better one
+Restructured program and made it work, however it has steady state error and needs to work some issues out. 
+
+
 ------------
 
 Construction (report)
