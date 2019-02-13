@@ -11,8 +11,10 @@ int currentMode = AUTO_MODE;
 const int MIN_SERVO_POS = 90;          // Lowest allowed servo position
 const int MAX_SERVO_POS = 155;         // Highest allowed servo position
 const int MID_SERVO_POS = 118;         // Middle / stable servo position
-const int MIN_BALL_DISTANCE = 500;     // 7cm - the closest the ball is allowed to be
-const int MAX_BALL_DISTANCE = 190;     // 39cm - the farthest the ball is allowed to be
+const int MIN_BALL_DISTANCE = 500;     // (analog value) the closest the ball is allowed to be
+const int MAX_BALL_DISTANCE = 190;     // (analog value) the farthest the ball is allowed to be
+// const float MIN_BALL_DISTANCE_CM = ???;  // (linearised) the closest the ball is allowed to be in centimetres
+// const float MAX_BALL_DISTANCE_CM = ???;  // (linearised) the farthest the ball is allowed to be in centimetres
 
 // PID
 const float K_P = 0.2;    // The proportional gain
@@ -23,8 +25,8 @@ float i = 0;              // The integral output
 float d = 0;              // The derivative output
 
 // Log of distance readings
-const int NUM_DIST_READINGS = 40;           // Number of distance recordings.
-const int DIST_READS_PER_CYCLE = NUM_DIST_READINGS / 2;
+const int NUM_DIST_READINGS = 40;           // Total number of distance readings to log
+const int DIST_READS_PER_CYCLE = 40;        // Number of readings to take per cycle
 int distLog[NUM_DIST_READINGS - 1] = {};    // A log of previous distance sensor readings
 int distLogIndex = 0;                       // Index of distanceLog
 
@@ -161,10 +163,19 @@ int getDistance(int sensorPin) {
   return ballDistance;
 }
 
+/** Checks the lookup table to convert analog distance readings to centimetres
+ *  
+ *  @param distance The distance as an analog value between 0-1023
+ *  @return the distance in centimetres
+ */
 float convertDistanceToCm (int distance) {
-  for (int i = 0; i < NUM_DIST_READINGS; i++) {
-    // TODO: USE LOOKUP TABLE
+  float distanceInCm = 0.0;
+  for (int i = 0; i < sizeof(DISTANCE_INDEX-1); i++) {
+    if (distance <= DISTANCE_TABLE[i] && distance > DISTANCE_TABLE[i+1]) {
+      distanceInCm = DISTANCE_TABLE[i];
+    }
   }
+  return distanceInCm;
 }
 
 /**
@@ -193,7 +204,9 @@ boolean isButtonPressed(int buttonPin) {
 void printToSerial() {
   Serial.print("Distance (A): ");
   Serial.print(ballDistance);
-  Serial.print("     ");
+  Serial.print(" (");
+  Serial.print(convertDistanceToCm(ballDistance));
+  Serial.print("cm)     ");
   Serial.print("Servo pos: ");
   Serial.print(servoPos);
   Serial.print("     ");
