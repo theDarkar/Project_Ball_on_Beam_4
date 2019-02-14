@@ -18,7 +18,7 @@ const int MAX_BALL_DISTANCE = 190;     // (analog value) the farthest the ball i
 
 // PID
 const float K_P = 0.2;    // The proportional gain
-const float K_I = 0;      // The integral gain
+const float K_I = 0.0;      // The integral gain
 const float K_D = 0.9;    // The derivative gain
 float p = 0;              // The proportional output           
 float i = 0;              // The integral output
@@ -26,7 +26,7 @@ float d = 0;              // The derivative output
 
 // Log of distance readings
 const int NUM_DIST_READINGS = 40;           // Total number of distance readings to log
-const int DIST_READS_PER_CYCLE = 40;        // Number of readings to take per cycle
+const int DIST_READS_PER_CYCLE = 30;        // Number of readings to take per cycle
 int distLog[NUM_DIST_READINGS - 1] = {};    // A log of previous distance sensor readings
 int distLogIndex = 0;                       // Index of distanceLog
 
@@ -61,7 +61,7 @@ void setup() {
   setServoPos(MID_SERVO_POS);     // enter balanced position
   Serial.begin(9600);
   for (int i = 0; i < 10; i++) {
-    getDistance(DIST_SENSOR_PIN);          // populate the distance log for later use
+    getDistance(DIST_SENSOR_PIN); // populate the distance log for later use
   }
 }
 
@@ -105,9 +105,19 @@ void manualMode() {
 void autoMode() {
   setpoint = map(potPos, 0, 1023, MAX_BALL_DISTANCE, MIN_BALL_DISTANCE);
   error = setpoint - ballDistance;
+
+  // Proportional
   p = K_P * error;
+
+  // Integral
   i = K_I * (i + error);
+
+  // Derivative
+  if (abs(previousError) > 2) {
   d = K_D * (error - previousError);
+  } else {
+    d = 0;
+  }
   setServoPos(MID_SERVO_POS + p + i + d);
   previousError = error;
 }
@@ -170,9 +180,10 @@ int getDistance(int sensorPin) {
  */
 float convertDistanceToCm (int distance) {
   float distanceInCm = 0.0;
-  for (int i = 0; i < sizeof(DISTANCE_INDEX-1); i++) {
-    if (distance <= DISTANCE_TABLE[i] && distance > DISTANCE_TABLE[i+1]) {
-      distanceInCm = DISTANCE_TABLE[i];
+  for (int i = 0; i < sizeof(DISTANCE_INDEX); i++) {
+    if ((float)distance >= DISTANCE_TABLE[i] && (float)distance < DISTANCE_TABLE[i-1]) {
+      distanceInCm = DISTANCE_INDEX[i];
+      return distanceInCm;
     }
   }
   return distanceInCm;
@@ -202,7 +213,7 @@ boolean isButtonPressed(int buttonPin) {
    @param manualMode sets the mode between manual and automatic
 */
 void printToSerial() {
-  Serial.print("Distance (A): ");
+  Serial.print("Distance: ");
   Serial.print(ballDistance);
   Serial.print(" (");
   Serial.print(convertDistanceToCm(ballDistance));
