@@ -13,20 +13,20 @@ const int MAX_SERVO_POS = 155;         // Highest allowed servo position
 const int MID_SERVO_POS = 118;         // Middle / stable servo position
 const int MIN_BALL_DISTANCE = 500;     // (analog value) the closest the ball is allowed to be
 const int MAX_BALL_DISTANCE = 190;     // (analog value) the farthest the ball is allowed to be
-// const float MIN_BALL_DISTANCE_CM = ???;  // (linearised) the closest the ball is allowed to be in centimetres
-// const float MAX_BALL_DISTANCE_CM = ???;  // (linearised) the farthest the ball is allowed to be in centimetres
+const float MIN_BALL_DISTANCE_CM = 10.0;  // (linearised) the closest the ball is allowed to be in centimetres
+const float MAX_BALL_DISTANCE_CM = 30.0;  // (linearised) the farthest the ball is allowed to be in centimetres
 
 // PID
-const float K_P = 0.2;    // The proportional gain
-const float K_I = 0.0;      // The integral gain
-const float K_D = 0.9;    // The derivative gain
+const float K_P = 1.4;      // The proportional gain
+const float K_I = 0.01;    // The integral gain
+const float K_D = 5;    // The derivative gain
 float p = 0;              // The proportional output           
 float i = 0;              // The integral output
 float d = 0;              // The derivative output
 
 // Log of distance readings
-const int NUM_DIST_READINGS = 40;           // Total number of distance readings to log
-const int DIST_READS_PER_CYCLE = 30;        // Number of readings to take per cycle
+const int NUM_DIST_READINGS = 20;           // Total number of distance readings to log
+const int DIST_READS_PER_CYCLE = 20;        // Number of readings to take per cycle
 int distLog[NUM_DIST_READINGS - 1] = {};    // A log of previous distance sensor readings
 int distLogIndex = 0;                       // Index of distanceLog
 
@@ -40,11 +40,12 @@ const int SERVO_PIN = 10;             // Pin connected to servo
 // Control variables
 int servoPos = 0;
 int potPos = 0;
-int error = 0;
-int previousError = 0;
-int setpoint = 0;
-int integral = 0;
+float error = 0;
+float previousError = 0;
+float setpoint = 0.0;
+float integral = 0;
 int ballDistance = 0;
+float ballDistanceCm = 0.0;
 
 /** Lookup table
     DISTANCE_TABLE = analog distance sensor values
@@ -69,6 +70,7 @@ void setup() {
 void loop() {
   potPos = analogRead(POT_PIN);
   ballDistance = constrain(getDistance(DIST_SENSOR_PIN), MAX_BALL_DISTANCE, MIN_BALL_DISTANCE);
+  ballDistanceCm = convertDistanceToCm(ballDistance);
   setLedPin(LED_PIN);
 
   switch (currentMode) {
@@ -103,18 +105,18 @@ void manualMode() {
 
 */
 void autoMode() {
-  setpoint = map(potPos, 0, 1023, MAX_BALL_DISTANCE, MIN_BALL_DISTANCE);
-  error = setpoint - ballDistance;
+  setpoint = map(potPos, 0, 1023, MAX_BALL_DISTANCE_CM, MIN_BALL_DISTANCE_CM);
+  error = setpoint - ballDistanceCm;
 
   // Proportional
-  p = K_P * error;
+  p = -K_P * error;
 
   // Integral
-  i = K_I * (i + error);
+  i = -K_I * (i + error);
 
   // Derivative
-  if (abs(previousError) > 2) {
-  d = K_D * (error - previousError);
+  if (abs(previousError) > 0.5) {
+  d = -K_D * (error - previousError);
   } else {
     d = 0;
   }
@@ -216,7 +218,7 @@ void printToSerial() {
   Serial.print("Distance: ");
   Serial.print(ballDistance);
   Serial.print(" (");
-  Serial.print(convertDistanceToCm(ballDistance));
+  Serial.print(ballDistanceCm);
   Serial.print("cm)     ");
   Serial.print("Servo pos: ");
   Serial.print(servoPos);
