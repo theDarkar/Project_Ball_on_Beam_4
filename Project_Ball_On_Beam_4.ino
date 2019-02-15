@@ -46,7 +46,6 @@ float setpoint = 0.0;
 float integral = 0;
 int ballDistance = 0;
 float ballDistanceCm = 0.0;
-double ballDistancefx = 0.0;
 
 /** Lookup table
     DISTANCE_TABLE = analog distance sensor values
@@ -72,7 +71,6 @@ void loop() {
   potPos = analogRead(POT_PIN);
   ballDistance = constrain(getDistance(DIST_SENSOR_PIN), MAX_BALL_DISTANCE, MIN_BALL_DISTANCE);
   ballDistanceCm = convertDistanceToCm(ballDistance);
-  ballDistancefx = convertDistanceToCmfx(ballDistance);
   setLedPin(LED_PIN);
 
   switch (currentMode) {
@@ -195,33 +193,6 @@ float convertDistanceToCm (int distance) {
   return distanceInCm;
 }
 
-double convertDistanceToCmfx(int distance) {
-  double fx = 0;
-  if (distSensor <= 202) {
-    double x1 = distSensor;
-    double p1 =    0.002309;//  (0.001449, 0.00317)
-    double p2 =      -1.099;//  (-1.412, -0.7866)
-    double p3 =       156.8;//  (128.4, 185.1)
-    fx = p1 * pow(x1, 2) + p2 * x1 + p3;
-  } else if (202 < distSensor <= 306) {
-    double x2 = distSensor;
-    double p1 =   1.651e-07;//  (6.832e-08, 2.619e-07)
-    double p2 =  -0.0001753;//  (-0.0002731, -7.751e-05)
-    double p3 =     0.06981;//  (0.03299, 0.1066)
-    double p4 =      -12.45;//  (-18.57, -6.328)
-    double p5 =       865.2;//  (485.8, 1245)
-    fx = p1 * pow(x2, 4) + p2 * pow(x2, 3) + p3 * pow(x2, 2) + p4 * x2 + p5;
-  } else if (306 < distSensor) {
-    double x3 = distSensor;
-    double p1 =   5.728e-05;//  (4.904e-05, 6.552e-05)
-    double p2 =    -0.08348;//  (-0.09124, -0.07572)
-    double p3 =       36.86;//  (35.11, 38.61)
-
-    fx4 = p1 * pow(x3,2) + p2 * x3 + p3;
-  }
-  return fx;
-}
-
 /**
    Checks if the button pin is HIGH or LOW and returns true if the
    button ispressed or false if the button isn't pressed
@@ -250,9 +221,7 @@ void printToSerial() {
   Serial.print(ballDistance);
   Serial.print(" (");
   Serial.print(ballDistanceCm);
-  Serial.print("cm)  (fx: ");
-  Serial.print(ballDistancefx);
-  Serial.print("cm)    ");
+  Serial.print("cm)     ");
   Serial.print("Servo pos: ");
   Serial.print(servoPos);
   Serial.print("     ");
