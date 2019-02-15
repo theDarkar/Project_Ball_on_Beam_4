@@ -10,7 +10,7 @@ int currentMode = AUTO_MODE;
 // Physical limitations
 const int MIN_SERVO_POS = 90;          // Lowest allowed servo position
 const int MAX_SERVO_POS = 155;         // Highest allowed servo position
-const int MID_SERVO_POS = 118;         // Middle / stable servo position
+const int MID_SERVO_POS = 115;         // Middle / stable servo position
 const int MIN_BALL_DISTANCE = 500;     // (analog value) the closest the ball is allowed to be
 const int MAX_BALL_DISTANCE = 190;     // (analog value) the farthest the ball is allowed to be
 const float MIN_BALL_DISTANCE_CM = 10.0;  // (linearised) the closest the ball is allowed to be in centimetres
@@ -19,7 +19,7 @@ const float MAX_BALL_DISTANCE_CM = 30.0;  // (linearised) the farthest the ball 
 // PID
 const float K_P = 1.4;      // The proportional gain
 const float K_I = 0.01;    // The integral gain
-const float K_D = 5;    // The derivative gain
+const float K_D = 5;       // The derivative gain
 float p = 0;              // The proportional output           
 float i = 0;              // The integral output
 float d = 0;              // The derivative output
@@ -83,6 +83,7 @@ void loop() {
     case AUTO_MODE:
       autoMode();
       if (!isButtonPressed(BUTTON_PIN)) {
+        integral = 0;
         currentMode = MANUAL_MODE;
       }
       break;
@@ -112,7 +113,8 @@ void autoMode() {
   p = -K_P * error;
 
   // Integral
-  i = -K_I * (i + error);
+  integral = integral + error;
+  i = -K_I * integral;
 
   // Derivative
   if (abs(previousError) > 0.5) {
@@ -235,6 +237,9 @@ void printToSerial() {
       Serial.print("     ");
       Serial.print("Error:");
       Serial.print(error);
+      Serial.print("     ");
+      Serial.print("Integral:");
+      Serial.print(i);
       break;
     default:
       break;
