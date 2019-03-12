@@ -154,3 +154,10 @@ boolean isButtonPressed(int buttonPin) {
   }
   return (buttonStateTrueFalse);
 }
+
+/**
+ * Prints analog ball distance to LabVIEW
+ */
+void printToLabVIEW(){
+  
+}
